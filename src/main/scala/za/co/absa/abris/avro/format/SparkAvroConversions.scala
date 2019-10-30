@@ -26,6 +26,7 @@ import com.databricks.spark.avro.{DatabricksAdapter, SchemaConverters}
 import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.generic.GenericData.Record
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
+import org.apache.avro.io.Encoder
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import za.co.absa.abris.avro.read.confluent.ConfluentConstants
@@ -57,7 +58,7 @@ object SparkAvroConversions {
    * 
    * Uses Avro's Java API under the hood.
    */
-  def toByteArray(record: IndexedRecord, schema: Schema, schemaId: Option[Int] = None): Array[Byte] = {
+  def toByteArray(record: Any, schema: Schema, schemaId: Option[Int] = None): Array[Byte] = {
     val outStream = new ByteArrayOutputStream()
 
     if (schemaId.isDefined) {
@@ -65,15 +66,26 @@ object SparkAvroConversions {
     }
 
     val encoder = avroWriterHolder.getEncoder(outStream)
-    try {                 
-      avroWriterHolder.getWriter(schema).write(record, encoder)
+    try {
+      record match {
+        case ir: IndexedRecord => writeIndexedRecord(schema, ir, encoder)
+        case s: String => writeString(schema, s, encoder)
+      }
       encoder.flush()
       outStream.flush()
       outStream.toByteArray()
     } finally {      
       outStream.close()
     }    
-  }  
+  }
+
+  def writeIndexedRecord(schema: Schema, indexedRecord: IndexedRecord, encoder: Encoder): Unit = {
+    avroWriterHolder.getWriter(schema).write(indexedRecord, encoder)
+  }
+
+  def writeString(schema: Schema, record: String, encoder: Encoder): Unit = {
+    avroWriterHolder.getStringWriter(schema).write(record, encoder)
+  }
   
   /**
    * Converts a Spark's SQL type into an Avro schema, using specific names and namespaces for the schema.
@@ -89,9 +101,11 @@ object SparkAvroConversions {
   /**
    * Converts a Spark Row into an Avro's binary record.
    */
-  def rowToBinaryAvro(row: Row, sparkSchema: StructType, avroSchema: Schema, schemaId: Option[Int] = None) = {
-    val record = rowToGenericRecord(row, sparkSchema, avroSchema)    
-    toByteArray(record, avroSchema, schemaId)
+  def rowToBinaryAvro(row: Any, sparkSchema: DataType, avroSchema: Schema, schemaId: Option[Int] = None) = {
+    if (row.isInstanceOf[Row])
+      toByteArray(rowToGenericRecord(row, sparkSchema, avroSchema), avroSchema, schemaId)
+    else
+      toByteArray(row, avroSchema, schemaId)
   }
 
   /**
@@ -99,11 +113,11 @@ object SparkAvroConversions {
    * 
    * Relies on Databricks Spark-Avro library to do the job.
    */
-  def toSqlType(schema: Schema): StructType = {
-    DatabricksAdapter.toSqlType(schema).dataType.asInstanceOf[StructType]
+  def toSqlType(schema: Schema): DataType = {
+    DatabricksAdapter.toSqlType(schema).dataType//.asInstanceOf[StructType]
   }   
   
-  private def rowToGenericRecord(row: Row, sparkSchema: StructType, avroSchema: Schema) = {
+  private def rowToGenericRecord(row: Any, sparkSchema: DataType, avroSchema: Schema) = {
     val converter = getConverter(sparkSchema, avroSchema.getName, avroSchema.getNamespace)
     converter(row).asInstanceOf[GenericRecord]
   }

@@ -17,7 +17,7 @@
 package za.co.absa.abris.avro.schemas.impl
 
 import org.apache.avro.Schema
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.abris.avro.format.SparkAvroConversions
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.schemas.SchemasProcessor
@@ -31,7 +31,7 @@ class AvroToSparkProcessor(plainAvroSchema: String) extends SchemasProcessor {
     AvroSchemaUtils.parse(plainAvroSchema)
   }
   
-  def getSparkSchema(): StructType = {
+  def getSparkSchema(): DataType = {
     SparkAvroConversions.toSqlType(getAvroSchema())
   }
 }

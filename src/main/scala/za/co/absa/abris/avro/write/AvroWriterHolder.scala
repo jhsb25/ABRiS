@@ -19,7 +19,7 @@ package za.co.absa.abris.avro.write
 import java.io.ByteArrayOutputStream
 
 import org.apache.avro.Schema
-import org.apache.avro.generic.IndexedRecord
+import org.apache.avro.generic.{GenericDatumWriter, IndexedRecord}
 import org.apache.avro.io.{BinaryEncoder, DatumWriter, Encoder, EncoderFactory}
 
 /**
@@ -27,11 +27,16 @@ import org.apache.avro.io.{BinaryEncoder, DatumWriter, Encoder, EncoderFactory}
  */
 class AvroWriterHolder {
      
-  def getWriter(schema: Schema): DatumWriter[IndexedRecord] = {    
+  def getWriter(schema: Schema): DatumWriter[IndexedRecord] = {
     this.writer.setSchema(schema)
     this.writer
   }
-  
+
+  def getStringWriter(schema: Schema): GenericDatumWriter[String] = {
+    this.stringWriter.setSchema(schema)
+    this.stringWriter
+  }
+
   def getEncoder(outStream: ByteArrayOutputStream): Encoder = {       
     if (encoder == null) {     
      encoder = EncoderFactory.get().binaryEncoder(outStream, null)
@@ -40,5 +45,6 @@ class AvroWriterHolder {
   }
     
   private val writer = new ScalaCustomDatumWriter[IndexedRecord]()
-  private var encoder: BinaryEncoder = null  
+  private val stringWriter = new GenericDatumWriter[String]
+  private var encoder: BinaryEncoder = null
 }

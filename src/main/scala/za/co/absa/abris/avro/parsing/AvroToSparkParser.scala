@@ -16,10 +16,11 @@
 
 package za.co.absa.abris.avro.parsing
 
+import com.databricks.spark.avro.SchemaConverters.SchemaType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.abris.avro.format.SparkAvroConversions
 
 import scala.collection.JavaConverters.asScalaBufferConverter
@@ -30,7 +31,7 @@ import scala.collection.mutable.HashMap
  */
 class AvroToSparkParser extends Serializable {
   
-  private var schemaToSql = new HashMap[String,StructType]
+  private var schemaToSql = new HashMap[String, DataType]
   
   /**
    * Converts Avro's GenericRecords to Spark's GenericRowWithSchemas.
@@ -46,10 +47,10 @@ class AvroToSparkParser extends Serializable {
     for (field <- avroRecord.getSchema.getFields.asScala) {      
       avroDataArray(field.pos()) = avroRecord.get(field.pos())
     }    
-    new GenericRowWithSchema(avroDataArray, structType)
+    new GenericRowWithSchema(avroDataArray, structType.asInstanceOf[StructType])
   }
   
-  private def getSqlType(schema: Schema): StructType = {
+  private def getSqlType(schema: Schema): DataType = {
     schemaToSql.getOrElseUpdate(schema.getName, SparkAvroConversions.toSqlType(schema))    
   }
   

@@ -20,6 +20,7 @@ import java.io.FileInputStream
 import java.util.Properties
 
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, Encoder, Row, SparkSession}
 import za.co.absa.abris.avro.format.SparkAvroConversions
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
@@ -96,6 +97,6 @@ object ConfluentKafkaAvroWriter {
     val avroSchema = AvroSchemaUtils.parse(ComplexRecordsGenerator.usedAvroSchema)
     val sparkSchema = SparkAvroConversions.toSqlType(avroSchema)
     println(sparkSchema)
-    RowEncoder.apply(sparkSchema)
+    RowEncoder.apply(sparkSchema.asInstanceOf[StructType])
   }
 }

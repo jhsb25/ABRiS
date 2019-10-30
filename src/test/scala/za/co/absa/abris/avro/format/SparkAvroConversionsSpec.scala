@@ -94,7 +94,7 @@ class SparkAvroConversionsSpec extends FlatSpec {
   it should "convert Avro schemas to SQL types" in {
     val schema = AvroSchemaUtils.parse(TestSchemas.COMPLEX_SCHEMA_SPEC)
     val sql = SparkAvroConversions.toSqlType(schema)    
-    val schemaFromSql = SparkAvroConversions.toAvroSchema(sql, schema.getName, schema.getNamespace)
+    val schemaFromSql = SparkAvroConversions.toAvroSchema(sql.asInstanceOf[StructType], schema.getName, schema.getNamespace)
     
     schema.getFields.asScala.foreach(field => assert(schema.getField(field.name).toString == schemaFromSql.getField(field.name).toString))
   }

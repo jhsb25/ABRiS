@@ -21,6 +21,7 @@ import java.util.Properties
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.types.StructType
 import za.co.absa.abris.avro.format.SparkAvroConversions
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.schemas.policy.SchemaRetentionPolicies.{RETAIN_SELECTED_COLUMN_ONLY, SchemaRetentionPolicy}
@@ -101,6 +102,6 @@ object AvroParquet {
   private def getEncoder(): Encoder[Row] = {
     val avroSchema = AvroSchemaUtils.load(AVRO_SCHEMA)
     val sparkSchema = SparkAvroConversions.toSqlType(avroSchema)
-    RowEncoder.apply(sparkSchema)
+    RowEncoder.apply(sparkSchema.asInstanceOf[StructType])
   }        
 }

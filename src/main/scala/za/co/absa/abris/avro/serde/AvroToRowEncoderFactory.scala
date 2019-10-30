@@ -19,7 +19,7 @@ package za.co.absa.abris.avro.serde
 import org.apache.avro.Schema
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.abris.avro.format.SparkAvroConversions
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 
@@ -28,8 +28,8 @@ import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
   */
 private[avro] object AvroToRowEncoderFactory {
 
-  def createRowEncoder(schema: StructType): ExpressionEncoder[Row] = {
-    RowEncoder(schema)
+  def createRowEncoder(schema: DataType): ExpressionEncoder[Row] = {
+    RowEncoder(schema.asInstanceOf[StructType])
   }
 
   def createRowEncoder(schema: Schema): ExpressionEncoder[Row] = {
